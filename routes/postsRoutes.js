@@ -26,20 +26,54 @@ router.get('/' , async (req, res, next) => {
     }}
 );
 
-// GET post by id
-router.get('/:id', async (req, res, next) => {
-    const postId = req.params.id;
-    const data = await readData();
-    const post = data.find((post) => post.id === postId);
+// GET POST BY ID
+router.get("/post/:id", async (req, res, next) => {
+    try {
+      // Extract the post ID from the request parameters
+      const postId = req.params.id;
+      // Read data from the JSON file
+      const data = await readData();
 
-    if(!post){
-        res.status(404).send('Post not found');
-    } else {
-        console.error(error.message);
+      // Find the post with the matching ID
+      const post = data.find((post) => post.id === postId);
+
+      // If the post is not found, send a 404 response
+      if (!post) {
+        res.status(404).json({ error: "Post not found" });
+      } else {
+        // If the post is found, send it as the response
+        res.status(200).send(post);
+      }
+    } catch (error) {
+      // Handle errors by logging them and sending an error response
+      console.error(error.message);
+    }
+  });
+
+// CREATE POST
+router.post("/", validatePostData, async (req, res, next) => {
+    try {
+      // Generate a unique ID for the new post
+      const newPost = {
+        id: Date.now().toString(),
+        username: req.body.username,
+        postTitle: req.body.postTitle,
+        postContent: req.body.postContent,
+      };
+
+      // Read the existing data
+      const data = await readData();
+
+      // Add the new post to the data
+      data.push(newPost);
+
+      // Write the updated data back to the JSON file
+      await fs.writeFile("./database/posts.json", JSON.stringify(data));
+
+      // Send a success response with the new post
+      res.status(201).json(newPost);
+    } catch (error) {
+      // Handle errors by logging them to the console
+      console.error(error.message);
     }
 });
-
-// CREATE post
-router.post('/', validatePostData, async (req, res, next) => {
-    
-}
