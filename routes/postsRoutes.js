@@ -77,3 +77,34 @@ router.post("/", validatePostData, async (req, res, next) => {
       console.error(error.message);
     }
 });
+
+// Update post
+router.put('/post/:id', validatePostData, async (req, res, next) => {
+    try{
+        const postId = req.params.id;
+        const updatedData = {
+            username: req.body.username,
+            postTitle: req.body.postTitle,
+            postContent: req.body.postContent,
+        };
+
+        const data = await readData();
+
+        const postIndex = data.findIndex((post) => post.id === postId);
+
+        if(postIndex === -1){
+            return res.status(404).json({ error: 'Post not found'})
+        }
+
+        data[postIndex] = {
+            ...data[postIndex],
+            ...updatedData
+        };
+
+        await fs.writeFile('./database/posts.json', JSON.stringify(data))
+
+        res.status(200).json(data[postIndex])
+    } catch (error) {
+        console.error(error.message)
+    }
+});
