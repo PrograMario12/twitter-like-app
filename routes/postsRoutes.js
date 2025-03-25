@@ -108,3 +108,28 @@ router.put('/post/:id', validatePostData, async (req, res, next) => {
         console.error(error.message)
     }
 });
+
+// Delete post
+router.delete('/post/:id', async (req, res, next) => {
+  try{
+    // Extracting the post id
+    const postId = req.params.id;
+
+    // Delete the post
+    const data = await readData();
+
+    const postIndex = data.findIndex((post) => post.id === postId);
+
+    if(postIndex === -1) {
+      return res.status(404).json({ error: 'Post not found'});
+    }
+
+    data.splice(postIndex, 1);
+
+    await fs.writeFile('./database/posts.json', JSON.stringify(data));
+
+    res.status(200).json({ message: 'Post deleted successfully'})
+  } catch (error){
+    console.error(error.message)
+  }
+})
