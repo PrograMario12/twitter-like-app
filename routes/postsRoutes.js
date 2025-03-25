@@ -1,16 +1,25 @@
 // Importing required modules and dependencies
 const express = require('express');
-const fs = require('fs');
+const fs = require('fs').promises;
 const validatePostData = require('../middlewares/validateData')
 
 // Initializing an express router
 const router = express.Router();
 
-// Creating a function to read data
+// Leer datos del archivo JSON
 async function readData() {
     try {
-        const data = await fs.readFile('./database/posts.json');
+        const data = await fs.readFile('./database/posts.json', 'utf-8'); // Asegúrate de incluir el encoding
         return JSON.parse(data);
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Escribir datos en el archivo JSON
+async function writeData(data) {
+    try {
+        await fs.writeFile('./database/posts.json', JSON.stringify(data, null, 2));
     } catch (error) {
         throw error;
     }
@@ -20,11 +29,11 @@ async function readData() {
 router.get('/' , async (req, res, next) => {
     try {
         const posts = await readData();
-        res.status(200).send(data);
+        res.status(200).send(posts); // Aquí estás usando "data", pero debería ser "posts"
     } catch (error) {
         console.error(error.message);
-    }}
-);
+    }
+});
 
 // GET POST BY ID
 router.get("/post/:id", async (req, res, next) => {
@@ -68,7 +77,7 @@ router.post("/", validatePostData, async (req, res, next) => {
       data.push(newPost);
 
       // Write the updated data back to the JSON file
-      await fs.writeFile("./database/posts.json", JSON.stringify(data));
+      await writeData(data);
 
       // Send a success response with the new post
       res.status(201).json(newPost);
@@ -101,7 +110,7 @@ router.put('/post/:id', validatePostData, async (req, res, next) => {
             ...updatedData
         };
 
-        await fs.writeFile('./database/posts.json', JSON.stringify(data))
+        await writeData(data)
 
         res.status(200).json(data[postIndex])
     } catch (error) {
@@ -126,10 +135,12 @@ router.delete('/post/:id', async (req, res, next) => {
 
     data.splice(postIndex, 1);
 
-    await fs.writeFile('./database/posts.json', JSON.stringify(data));
+    await writeData(data);
 
     res.status(200).json({ message: 'Post deleted successfully'})
   } catch (error){
     console.error(error.message)
   }
 })
+
+module.exports = router
